@@ -1,166 +1,66 @@
+'use client';
+
 import React from 'react';
 
 interface ScoreProps {
-  answers: any;
+  score: number;
+  label: string;
+  color: string;
 }
 
-const calculateScore = (answers: any) => {
-  // Baspoäng per kategori (0-25)
-  const teamScore = calculateTeamScore(answers);
-  const problemSolutionScore = calculateProblemSolutionScore(answers);
-  const marketScore = calculateMarketScore(answers);
+interface ScoreComparison {
+  average: number;
+  percentile: number;
+}
 
-  // Total baspoäng (0-75)
-  const baseScore = teamScore + problemSolutionScore + marketScore;
+interface ScoreData {
+  score: number;
+  label: string;
+  color: string;
+  comparison: ScoreComparison;
+}
 
-  // Asymptotisk cap för att göra 100 nästan omöjligt
-  const finalScore = Math.min(100, Math.round(100 * (1 - Math.exp(-baseScore / 50))));
-
-  return {
-    score: finalScore,
-    details: {
-      team: teamScore,
-      problemSolution: problemSolutionScore,
-      market: marketScore
-    }
+export default function BusinessPlanScore({ score, label, color }: ScoreProps) {
+  const getScoreColor = (score: number): string => {
+    if (score >= 80) return '#22c55e';
+    if (score >= 60) return '#eab308';
+    if (score >= 40) return '#f97316';
+    return '#ef4444';
   };
-};
 
-const calculateTeamScore = (answers: any) => {
-  let score = 0;
-  
-  // Team experience and background
-  if (answers.team?.founders) {
-    const foundersRaw = answers.team.founders;
-    const founders = Array.isArray(foundersRaw)
-      ? foundersRaw
-      : typeof foundersRaw === 'string' && foundersRaw.length > 0
-        ? foundersRaw.split(',').map(f => f.trim()).filter(Boolean)
-        : [];
-    if (founders.length > 0) score += 5;
-    if (founders.length > 1) score += 5;
-    if (founders.some((f: string) => f.toLowerCase().includes('cto') || f.toLowerCase().includes('tech'))) score += 5;
-    if (founders.some((f: string) => f.toLowerCase().includes('ceo') || f.toLowerCase().includes('vd'))) score += 5;
-  }
+  const getScoreLabel = (score: number): string => {
+    if (score >= 80) return 'Excellent';
+    if (score >= 60) return 'Good';
+    if (score >= 40) return 'Fair';
+    return 'Needs Work';
+  };
 
-  // Key team members
-  if (answers.team?.key_team) {
-    const keyTeam = answers.team.key_team;
-    if (keyTeam.length > 0) score += 5;
-  }
+  const getScoreComparison = (score: number): ScoreComparison => {
+    return {
+      average: 65,
+      percentile: Math.round((score / 100) * 100)
+    };
+  };
 
-  return Math.min(25, score);
-};
-
-const calculateProblemSolutionScore = (answers: any) => {
-  let score = 0;
-
-  // Problem definition
-  if (answers.problem_solution?.problem) {
-    const problem = answers.problem_solution.problem;
-    if (problem.length > 50) score += 5;
-    if (problem.length > 100) score += 5;
-  }
-
-  // Solution clarity
-  if (answers.problem_solution?.solution) {
-    const solution = answers.problem_solution.solution;
-    if (solution.length > 50) score += 5;
-    if (solution.length > 100) score += 5;
-  }
-
-  // Business idea uniqueness
-  if (answers.business_idea?.why_unique) {
-    const uniqueness = answers.business_idea.why_unique;
-    if (uniqueness.length > 50) score += 5;
-  }
-
-  return Math.min(25, score);
-};
-
-const calculateMarketScore = (answers: any) => {
-  let score = 0;
-
-  // Market size
-  if (answers.market_size?.market_value) {
-    const marketValue = answers.market_size.market_value;
-    if (marketValue.length > 0) score += 5;
-    if (marketValue.includes('miljard') || marketValue.includes('billion')) score += 5;
-  }
-
-  // Market growth
-  if (answers.market_size?.growth) {
-    const growth = answers.market_size.growth;
-    if (growth.length > 0) score += 5;
-    if (growth.includes('%') || growth.includes('procent')) score += 5;
-  }
-
-  // Competition analysis
-  if (answers.competition?.main_competitors) {
-    const competitors = answers.competition.main_competitors;
-    if (competitors.length > 0) score += 5;
-  }
-
-  return Math.min(25, score);
-};
-
-const getScoreLabel = (score: number) => {
-  if (score >= 95) return { emoji: '🏆', label: 'Top 1%', cta: 'VIP fast track – we\'ll ping VC scouts today.' };
-  if (score >= 85) return { emoji: '🚀', label: 'Deal-ready', cta: 'Click for warm intro to our investor network.' };
-  if (score >= 75) return { emoji: '⭐', label: 'Investable with guidance', cta: 'We\'ll match you with angel/ALMI – let\'s polish the pitch first.' };
-  if (score >= 50) return { emoji: '⚙️', label: 'Potential, needs work', cta: 'Get a 30-day action plan + coach.' };
-  return { emoji: '🚧', label: 'Under construction', cta: 'Here are the top 3 gaps to address – book a workshop.' };
-};
-
-export default function BusinessPlanScore({ answers }: ScoreProps) {
-  const { score, details } = calculateScore(answers);
-  const { emoji, label, cta } = getScoreLabel(score);
+  const scoreData: ScoreData = {
+    score,
+    label,
+    color,
+    comparison: getScoreComparison(score)
+  };
 
   return (
-    <div className="bg-white rounded-xl p-6 shadow-lg">
-      <div className="text-center mb-6">
-        <div className="text-4xl mb-2">{emoji}</div>
-        <h2 className="text-2xl font-bold text-[#16475b] mb-2">{label}</h2>
-        <div className="text-4xl font-bold text-[#16475b]">{score}</div>
+    <div className="flex flex-col items-center p-6 bg-white rounded-lg shadow-lg">
+      <div 
+        className="w-32 h-32 rounded-full flex items-center justify-center text-4xl font-bold mb-4"
+        style={{ backgroundColor: scoreData.color }}
+      >
+        {scoreData.score}
       </div>
-
-      <div className="space-y-4">
-        <div>
-          <div className="flex justify-between mb-1">
-            <span className="text-sm font-medium text-[#16475b]">Team</span>
-            <span className="text-sm font-medium text-[#16475b]">{details.team}/25</span>
-          </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <div className="bg-[#16475b] h-2 rounded-full" style={{ width: `${(details.team / 25) * 100}%` }}></div>
-          </div>
-        </div>
-
-        <div>
-          <div className="flex justify-between mb-1">
-            <span className="text-sm font-medium text-[#16475b]">Problem/Lösning</span>
-            <span className="text-sm font-medium text-[#16475b]">{details.problemSolution}/25</span>
-          </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <div className="bg-[#16475b] h-2 rounded-full" style={{ width: `${(details.problemSolution / 25) * 100}%` }}></div>
-          </div>
-        </div>
-
-        <div>
-          <div className="flex justify-between mb-1">
-            <span className="text-sm font-medium text-[#16475b]">Marknad</span>
-            <span className="text-sm font-medium text-[#16475b]">{details.market}/25</span>
-          </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
-            <div className="bg-[#16475b] h-2 rounded-full" style={{ width: `${(details.market / 25) * 100}%` }}></div>
-          </div>
-        </div>
-      </div>
-
-      <div className="mt-6 text-center">
-        <p className="text-sm text-[#16475b] mb-4">{cta}</p>
-        <button className="bg-[#16475b] text-white font-bold rounded-full px-6 py-2 shadow hover:bg-[#16475b] hover:text-white transition-colors">
-          Boka möte
-        </button>
+      <h3 className="text-xl font-semibold mb-2">{scoreData.label}</h3>
+      <div className="text-sm text-gray-600">
+        <p>Average: {scoreData.comparison.average}</p>
+        <p>Percentile: {scoreData.comparison.percentile}%</p>
       </div>
     </div>
   );

@@ -1,5 +1,8 @@
+'use client';
+
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 interface ResultProps {
   score: number;
@@ -10,6 +13,24 @@ interface ResultProps {
   };
   answers: any;
   subscriptionLevel?: 'silver' | 'gold' | 'platinum';
+}
+
+interface Answer {
+  question: string;
+  answer: string;
+}
+
+interface ScoreData {
+  score: number;
+  motivation: string;
+  strengths: string;
+  weaknesses: string;
+}
+
+interface MarketData {
+  marketSize: number;
+  marketShare: number;
+  competitors: string[];
 }
 
 const getScoreLabel = (score: number) => {
@@ -133,6 +154,7 @@ const getOr = (val: any, fallback: any) => {
 };
 
 export default function BusinessPlanResult({ score: _score, details, answers, subscriptionLevel = 'silver' }: ResultProps) {
+  const router = useRouter();
   const [aiScore, setAiScore] = useState<number | null>(null);
   const [motivation, setMotivation] = useState('');
   const [strengths, setStrengths] = useState('');
@@ -145,9 +167,12 @@ export default function BusinessPlanResult({ score: _score, details, answers, su
   const [loadingCompetitors, setLoadingCompetitors] = useState(false);
   const [competitorError, setCompetitorError] = useState<string | null>(null);
   const [showScoreInfo, setShowScoreInfo] = useState(false);
+  const [marketData, setMarketData] = useState<MarketData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
   const scoreComparison = getScoreComparison(_score);
-  const marketData = getMarketSizeData(answers.market_size?.market_value || '0');
+  const marketDataFromProps = getMarketSizeData(answers.market_size?.market_value || '0');
 
   // --- AI feedback hooks ---
   const sectionKeys = [
@@ -234,6 +259,14 @@ export default function BusinessPlanResult({ score: _score, details, answers, su
       Lås upp i {subscriptionLevel === 'silver' ? 'Gold' : 'Platinum'}
     </button>
   );
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  if (error) {
+    return <div>Error: {error}</div>;
+  }
 
   return (
     <div className="relative min-h-screen w-full">
