@@ -5,19 +5,16 @@ export async function POST(req: NextRequest) {
   try {
     const { url } = await req.json();
     if (!url) {
-      return NextResponse.json({ error: 'URL saknas' }, { status: 400 });
+      return NextResponse.json({ error: 'URL is required' }, { status: 400 });
     }
 
-    console.log('Startar scraping av:', url);
     const result = await scrapeAndAnalyze(url);
-    console.log('Scraping klar, resultat:', result);
-    
     return NextResponse.json(result);
-  } catch (e) {
-    console.error('Fel vid scraping:', e);
-    return NextResponse.json({ 
-      error: 'Kunde inte skrapa eller analysera hemsidan.',
-      details: e instanceof Error ? e.message : 'Okänt fel'
-    }, { status: 500 });
+  } catch (error: any) {
+    console.error('Error in scrape-website:', error);
+    return NextResponse.json(
+      { error: error.message || 'Failed to scrape website' },
+      { status: 500 }
+    );
   }
 } 
