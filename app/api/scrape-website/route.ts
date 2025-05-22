@@ -10,10 +10,11 @@ export async function POST(req: NextRequest) {
 
     const result = await scrapeAndAnalyze(url);
     return NextResponse.json(result);
-  } catch (error: any) {
+  } catch (error: Error | unknown) {
     console.error('Error in scrape-website:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Failed to scrape website';
     return NextResponse.json(
-      { error: error.message || 'Failed to scrape website' },
+      { error: errorMessage },
       { status: 500 }
     );
   }
